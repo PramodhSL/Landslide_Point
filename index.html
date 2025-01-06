@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Landslide Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/togeojson@0.16.0"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        #map { height: 500px; width: 70%; float: left; }
+        #dashboard { height: 500px; width: 30%; float: right; overflow-y: auto; padding: 10px; }
+        .dashboard-section { margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; }
+        .dashboard-section h3 { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="dashboard"></div>
+    <script>
+        var map = L.map('map').setView([6.9, 80.5], 9);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        fetch('C:\Users\pramodh\Desktop\Project\LandslideData.geojson') // Replace with your file name
+            .then(response => response.json())
+            .then(geojson => {
+                var districtCounts = {};
+                var hazardTypeCounts = {};
+
+                L.geoJSON(geojson, {
+                    onEachFeature: function (feature, layer) {
+                        if (feature.properties) {
+                            let popupContent = "";
+                            for (let prop in feature.properties) {
+                                popupContent += `<b>${prop}:</b> ${feature.properties[prop]}<br>`;
+                            }
+                            layer.bindPopup(popupContent);
+
+                            const district = feature.properties.District.trim(); // Trim whitespace
+                            const hazardType = feature.properties.Type_of_Hazard;
+
+                            districtCounts[district] = (districtCounts[district] || 0) + 1;
+                            hazardTypeCounts[hazardType] = (hazardTypeCounts[hazardType] || 0) + 1;
+                        }
+                    }
+                }).addTo(map);
+
+                const dashboard = document.getElementById('dashboard');
+                dashboard.innerHTML = ""; // Clear previous content
+
+                const createSection = (title, counts) => {
+                    const section = document.createElement('div');
+                    section.className = 'dashboard-section';
+                    section.innerHTML = `<h3>${title}</h3><ul>`;
+                    for (const item in counts) {
+                        section.innerHTML += `<li>${item}: ${counts[item]}</li>`;
+                    }
+                    section.innerHTML += '</ul>';
+                    return section;
+                };
+
+                dashboard.appendChild(createSection('Cases by District', districtCounts));
+                dashboard.appendChild(createSection('Cases by Hazard Type', hazardTypeCounts));
+            }).catch(error => console.error("Error loading GeoJSON:", error)); //Error Handling
+
+        function loadKML(kmlURL) {
+            $.ajax({
+                url: kmlURL,
+                dataType: 'xml',
+                success: function(xml) {
+                    var geoJson = toGeoJSON.kml(xml);
+                    L.geoJSON(geoJson).addTo(map);
+                },
+                error: function(error) { //Error Handling
+                    console.error("Error loading KML:", error);
+                }
+            });
+        }
+
+        loadKML('C:\Users\pramodh\Desktop\Project\LS_polygon.kml'); // Replace with your file names
+    </script>
+</body>
+</html>
