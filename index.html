@@ -66,20 +66,7 @@
                 dashboard.appendChild(createSection('Cases by Hazard Type', hazardTypeCounts));
             }).catch(error => console.error("Error loading GeoJSON:", error)); //Error Handling
 
-        function loadKML(kmlURL) {
-            $.ajax({
-                url: kmlURL,
-                dataType: 'xml',
-                success: function(xml) {
-                    var geoJson = toGeoJSON.kml(xml);
-                    L.geoJSON(geoJson).addTo(map);
-                },
-                error: function(error) { //Error Handling
-                    console.error("Error loading KML:", error);
-                }
-            });
-        }
-
+       
         loadKML('C:\Users\pramodh\Desktop\Project\LS_polygon.kml'); // Replace with your file names
     </script>
 </body>
